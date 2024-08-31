@@ -79,9 +79,10 @@ class FunctionNode(ASTNode):
 
 
 class VariableNode(ASTNode):
-    def __init__(self, vtype, name):
+    def __init__(self, vtype, name,index=None):
         self.vtype = vtype
         self.name = name
+        self.index = index
 
     def __repr__(self):
         return f"VariableNode(vtype={self.vtype}, name={self.name})"
@@ -132,6 +133,16 @@ class FunctionCallNode(ASTNode):
 
     def __repr__(self):
         return f"FunctionCallNode(name={self.name}, args={self.args})"
+    
+
+class ArrayIndexingNode(ASTNode):
+    def __init__(self, index):
+        self.index = index
+        
+class VariableIndexNode(ASTNode):
+    def __init__(self, values):
+        self.values = values
+        
 
 
 class BinaryOpNode(ASTNode):

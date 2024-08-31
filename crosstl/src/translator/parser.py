@@ -16,6 +16,9 @@ from .ast import (
     TernaryOpNode,
     VERTEXShaderNode,
     FRAGMENTShaderNode,
+    ArrayIndexingNode,
+    VariableIndexNode
+    
 )
 
 from .lexer import Lexer
@@ -37,6 +40,7 @@ class Parser:
         self.current_token = self.tokens[self.pos]
 
     def skip_comments(self):
+        
         """Skip comments in the token list
 
         This method skips comments in the token list by incrementing the position
@@ -48,6 +52,7 @@ class Parser:
             self.eat(self.current_token[0])
 
     def eat(self, token_type):
+       
         """Consume the current token if it matches the expected token type
 
         This method consumes the current token if it matches the expected token type.
@@ -70,8 +75,9 @@ class Parser:
             raise SyntaxError(f"Expected {token_type}, got {self.current_token[0]}")
 
     def parse_uniforms(self):
-        """Parse uniform declarations
 
+        print("Parse_uniforms")
+        """Parse uniform declarations
         This method parses uniform declarations in the shader code.
         It consumes the "UNIFORM" token and then parses the uniform type and name.
         The method returns a list of UniformNode objects.
@@ -90,8 +96,6 @@ class Parser:
             if self.current_token[0] in [
                 "VECTOR",
                 "FLOAT",
-                "DOUBLE",
-                "UINT",
                 "INT",
                 "SAMPLER2D",
                 "MATRIX",
@@ -100,7 +104,7 @@ class Parser:
                 self.eat(self.current_token[0])
             else:
                 raise SyntaxError(
-                    f"Expected VECTOR, FLOAT, DOUBLE, UINT, INT or SAMPLER2D, got {self.current_token[0]}"
+                    f"Expected VECTOR, FLOAT, INT, or SAMPLER2D, got {self.current_token[0]}"
                 )
             name = self.current_token[1]
             self.eat("IDENTIFIER")
@@ -109,6 +113,7 @@ class Parser:
         return uniforms
 
     def parse(self):
+        print("Parse")
         """Parse the shader code
 
         This method parses the shader code and generates an abstract syntax tree (AST).
@@ -120,6 +125,7 @@ class Parser:
         return self.parse_shader()
 
     def parse_shader(self):
+        print("parse_shader")
         """Parse the shader code
 
         This method parses the shader code and generates a ShaderNode object.
@@ -144,9 +150,10 @@ class Parser:
         self.eat("LBRACE")
 
         global_inputs = self.parse_inputs()
+        print("Global_inputs",global_inputs)
         self.parse_uniforms()
         global_outputs = self.parse_outputs()
-
+        print("Global_outputs",global_outputs)
         global_functions = []
 
         vertex_section = None
@@ -159,15 +166,7 @@ class Parser:
             elif self.current_token[0] == "FRAGMENT":
                 fragment_section = self.parse_shader_section("FRAGMENT")
                 self.skip_comments()  # Skip comments while parsing functions
-            elif self.current_token[0] in [
-                "VECTOR",
-                "FLOAT",
-                "DOUBLE",
-                "UINT",
-                "INT",
-                "VOID",
-                "MATRIX",
-            ]:
+            elif self.current_token[0] in ["VECTOR", "FLOAT", "INT", "VOID", "MATRIX"]:
                 global_functions.append(self.parse_function())
                 self.skip_comments()  # Skip comments while parsing functions
             else:
@@ -212,10 +211,12 @@ class Parser:
             elif self.current_token[0] == "OUTPUT":
                 outputs.extend(self.parse_outputs())
             elif (
-                self.current_token[0]
-                in ["VECTOR", "FLOAT", "DOUBLE", "UINT", "INT", "VOID", "MATRIX"]
+                self.current_token[0] in ["VECTOR", "FLOAT", "INT", "VOID", "MATRIX"]
                 and self.peak(2)[0] == "LPAREN"
+               
             ):
+                
+                print(self.current_token[0])
                 functions.append(self.parse_function())
             elif self.current_token[0] == "FOR":
                 intermidiate.append(self.parse_for_loop())
@@ -225,8 +226,6 @@ class Parser:
                 "VECTOR",
                 "IDENTIFIER",
                 "FLOAT",
-                "DOUBLE",
-                "UINT",
                 "INT",
                 "MATRIX",
             ]:
@@ -235,6 +234,8 @@ class Parser:
                 raise SyntaxError(f"Unexpected token {self.current_token[0]}")
         self.eat("RBRACE")
         if section_type == "VERTEX":
+            print(inputs)
+            print(outputs)
             return VERTEXShaderNode(inputs, outputs, functions, intermidiate)
         else:
             return FRAGMENTShaderNode(inputs, outputs, functions, intermidiate)
@@ -261,8 +262,6 @@ class Parser:
             if self.current_token[0] in [
                 "VECTOR",
                 "FLOAT",
-                "DOUBLE",
-                "UINT",
                 "INT",
                 "MATRIX",
                 "SAMPLER2D",
@@ -271,7 +270,7 @@ class Parser:
                 self.eat(self.current_token[0])
             else:
                 raise SyntaxError(
-                    f"Expected VECTOR, FLOAT, DOUBLE, UINT, INT, MATRIX, or SAMPLER2D, got {self.current_token[0]}"
+                    f"Expected VECTOR, FLOAT, INT, MATRIX, or SAMPLER2D, got {self.current_token[0]}"
                 )
             name = self.current_token[1]
             self.eat("IDENTIFIER")
@@ -300,8 +299,6 @@ class Parser:
             if self.current_token[0] in [
                 "VECTOR",
                 "FLOAT",
-                "DOUBLE",
-                "UINT",
                 "INT",
                 "MATRIX",
                 "SAMPLER2D",
@@ -310,7 +307,7 @@ class Parser:
                 self.eat(self.current_token[0])
             else:
                 raise SyntaxError(
-                    f"Expected VECTOR, FLOAT, DOUBLE, UINT, INT, MATRIX, or SAMPLER2D, got {self.current_token[0]}"
+                    f"Expected VECTOR, FLOAT, INT, MATRIX, or SAMPLER2D, got {self.current_token[0]}"
                 )
             name = self.current_token[1]
             self.eat("IDENTIFIER")
@@ -345,8 +342,10 @@ class Parser:
             )
         self.eat("LPAREN")
         params = self.parse_parameters()
+        print(params)
         self.eat("RPAREN")
         self.eat("LBRACE")
+        print(self.current_token)
         body = self.parse_body()
         self.eat("RBRACE")
         return FunctionNode(return_type, fname, params, body)
@@ -403,22 +402,14 @@ class Parser:
         if self.current_token[0] == "VOID":
             self.eat("VOID")
             return "void"
-        elif self.current_token[0] in [
-            "VECTOR",
-            "FLOAT",
-            "DOUBLE",
-            "UINT",
-            "INT",
-            "MATRIX",
-            "SAMPLER2D",
-        ]:
+        elif self.current_token[0] in ["VECTOR", "FLOAT", "INT", "MATRIX", "SAMPLER2D"]:
             vtype = self.current_token[1]
             self.eat(self.current_token[0])
             return vtype
         elif self.current_token[0] == "IDENTIFIER":
             type_name = self.current_token[1]
             self.eat("IDENTIFIER")
-            if type_name in ["int", "uint", "float", "double"]:
+            if type_name in ["int", "float"]:
                 return type_name
             return type_name
         else:
@@ -432,8 +423,9 @@ class Parser:
         Returns:
 
             list: A list of statements in the function body
-
+(
         """
+        
         body = []
         while self.current_token[0] not in ["RBRACE", "EOF"]:
             if self.current_token[0] == "IF":
@@ -442,17 +434,12 @@ class Parser:
                 body.append(self.parse_for_loop())
             elif self.current_token[0] == "RETURN":
                 body.append(self.parse_return_statement())
-            elif self.current_token[0] in [
-                "VECTOR",
-                "IDENTIFIER",
-                "FLOAT",
-                "DOUBLE",
-                "UINT",
-                "INT",
-            ]:
+            elif self.current_token[0] in ["VECTOR", "IDENTIFIER", "FLOAT", "INT"]:
                 body.append(self.parse_assignment_or_function_call())
+            
             else:
                 raise SyntaxError(f"Unexpected token {self.current_token[0]}")
+            
         return body
 
     def parse_if_statement(self):
@@ -595,14 +582,8 @@ class Parser:
         """
         type_name = ""
         inc_dec = False
-        if self.current_token[0] in [
-            "VECTOR",
-            "FLOAT",
-            "DOUBLE",
-            "UINT",
-            "INT",
-            "MATRIX",
-        ]:
+        if self.current_token[0] in ["VECTOR", "FLOAT", "INT", "MATRIX"]:
+            
             type_name = self.current_token[1]
             self.eat(self.current_token[0])
         if self.current_token[0] == "IDENTIFIER":
@@ -625,8 +606,6 @@ class Parser:
             "GREATER_THAN",
             "LESS_EQUAL",
             "GREATER_EQUAL",
-            "BITWISE_SHIFT_RIGHT",
-            "BITWISE_SHIFT_LEFT",
         ]:
             return self.parse_assignment(name)
         elif self.current_token[0] == "INCREMENT":
@@ -681,12 +660,23 @@ class Parser:
             "GREATER_THAN",
             "LESS_EQUAL",
             "GREATER_EQUAL",
-            "BITWISE_SHIFT_RIGHT",
-            "BITWISE_SHIFT_LEFT",
         ]:
             op = self.current_token[1]
             self.eat(self.current_token[0])
             value = self.parse_expression()
+            if self.current_token[0] =="LBRACKET":
+                self.eat("LBRACKET")
+                Queue=[] # To cover all indexes
+                while self.current_token[0] != "RBRACKET":
+                    Queue.append(self.parse_expression())
+                print(Queue)
+                Queue=VariableNode(Queue)
+                self.eat("RBRACKET")
+                if(self.current_token[0]=="SEMICOLON"):
+                    self.eat("SEMICOLON")
+                    return BinaryOpNode(VariableNode(type_name, name,Queue), op, value)
+                
+                
             if self.current_token[0] == "DOT":
                 value = self.parse_member_access(value)
             if self.current_token[0] == "SEMICOLON":
@@ -711,13 +701,13 @@ class Parser:
             "GREATER_THAN",
             "LESS_EQUAL",
             "GREATER_EQUAL",
-            "BITWISE_SHIFT_RIGHT",
-            "BITWISE_SHIFT_LEFT",
             "EQUAL",
         ):
+            
             op = self.current_token[0]
             self.eat(op)
             value = self.parse_expression()
+            
             if self.current_token[0] == "SEMICOLON":
                 self.eat("SEMICOLON")
                 return BinaryOpNode(VariableNode(type_name, name), op, value)
@@ -725,7 +715,73 @@ class Parser:
                 raise SyntaxError(
                     f"Expected ';' after compound assignment, found: {self.current_token[0]}"
                 )
+            
+         # Array Indexing Condition along with assignment support
 
+
+        elif (self.current_token[0] =="LBRACKET"):
+            exp = [] # Array indexes are stored inside
+            while(self.current_token[0]=="LBRACKET"):
+                self.eat("LBRACKET")
+                index_value= self.parse_expression()
+                self.eat("RBRACKET")
+                exp.append(index_value)
+            
+            exp = VariableIndexNode(exp)
+            
+            if(self.current_token[0] =="EQUALS"):
+                print("It is Working")
+                op = self.current_token[0]
+                self.eat("EQUALS")
+                index_values=[]
+                if(self.current_token[0] in  ["FLOAT","INT"]):
+                    while(self.current_token[0] in ["FLOAT","INT"]):
+                        op2=self.current_token[0]
+                        self.eat(self.current_token[0])
+                        self.eat("LBRACKET")
+                        index_values.append(VariableNode(self.current_token[0],self.current_token[1]))
+                        self.parse_expression()
+                        self.eat("RBRACKET")
+                        values=[]
+                        self.eat("LPAREN")
+                        while(self.current_token[0] != "RPAREN"):
+                            try:
+                                value = self.parse_expression()
+                                values.append(VariableNode(self.current_token[0],self.current_token[1]))
+                                self.eat("COMMA")
+                            except:
+                                self.eat("RPAREN")
+
+                     
+                    values = ArrayIndexingNode(values)      
+                    index_values = VariableIndexNode(values)
+                    return BinaryOpNode(VariableNode(type_name,op,index_values),"Equals",values)
+                        
+
+
+                self.eat("LBRACE")
+
+                value =[]
+                
+                while(self.current_token[0] in ["FLOAT_NUMBER","VECTOR","IDENTIFIER","NUMBER"]):
+                    try:
+                        value.append(VariableNode(self.current_token[0],self.current_token[1]))
+                        self.eat(self.current_token[0])
+                        self.eat("COMMA")
+                    except:
+                        self.eat("RBRACE")
+                
+            if self.current_token[0] == "SEMICOLON":
+                self.eat("SEMICOLON")
+                return BinaryOpNode(VariableNode(type_name, name,exp), op, value)
+            else:
+                raise SyntaxError(
+                    f"Expected ';' after compound assignment, found: {self.current_token[0]}"
+                )
+
+          
+            
+            
         else:
             raise SyntaxError(
                 f"Unexpected token in variable declaration: {self.current_token[0]}"
@@ -761,8 +817,6 @@ class Parser:
             "GREATER_THAN",
             "LESS_EQUAL",
             "GREATER_EQUAL",
-            "BITWISE_SHIFT_RIGHT",
-            "BITWISE_SHIFT_LEFT",
         ]:
             op = self.current_token[0]
             op_name = self.current_token[1]
@@ -849,6 +903,8 @@ class Parser:
             expr = self.parse_expression()
             self.eat("RPAREN")
             return expr
+        
+        
         elif self.current_token[0] in ["NUMBER", "FLOAT_NUMBER"]:
             value = self.current_token[1]
             self.eat(self.current_token[0])
@@ -857,8 +913,6 @@ class Parser:
             "IDENTIFIER",
             "VECTOR",
             "FLOAT",
-            "DOUBLE",
-            "UINT",
             "INT",
             "MATRIX",
         ]:
@@ -902,6 +956,8 @@ class Parser:
             ASTNode: An ASTNode object representing the expression
 
         """
+        print(self.current_token[0])
+        
         expr = self.parse_ternary()
         while self.current_token[0] in [
             "LESS_THAN",
@@ -921,13 +977,13 @@ class Parser:
             "ASSIGN_SUB",
             "ASSIGN_MUL",
             "ASSIGN_DIV",
-            "BITWISE_SHIFT_RIGHT",
-            "BITWISE_SHIFT_LEFT",
         ]:
             op = self.current_token[0]
             self.eat(op)
+            print(op)
             right = self.parse_ternary()
             expr = BinaryOpNode(expr, op, right)
+            
         return expr
 
     def parse_ternary(self):
@@ -947,6 +1003,7 @@ class Parser:
             self.eat("COLON")
             false_expr = self.parse_expression()
             expr = TernaryOpNode(expr, true_expr, false_expr)
+        
         return expr
 
     def parse_function_call_or_identifier(self):
@@ -959,14 +1016,7 @@ class Parser:
             ASTNode: An ASTNode object representing the function call or identifier
 
         """
-        if self.current_token[0] in [
-            "VECTOR",
-            "FLOAT",
-            "DOUBLE",
-            "UINT",
-            "INT",
-            "MATRIX",
-        ]:
+        if self.current_token[0] in ["VECTOR", "FLOAT", "INT", "MATRIX"]:
             func_name = self.current_token[1]
             self.eat(self.current_token[0])
         else:

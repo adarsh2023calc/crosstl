@@ -59,6 +59,7 @@ class HLSLCodeGen:
         self.shader_outputs = node.global_outputs
         code = "\n"
         # Generate global inputs and outputs
+        
         if self.shader_inputs:
             code += "struct VSINPUT {\n"
             for i, (vtype, name) in enumerate(self.shader_inputs):

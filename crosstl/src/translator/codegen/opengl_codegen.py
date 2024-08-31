@@ -13,6 +13,7 @@ from ..ast import (
     VERTEXShaderNode,
     FRAGMENTShaderNode,
     TernaryOpNode,
+    
 )
 
 
@@ -29,6 +30,7 @@ class GLSLCodeGen:
         return ""
 
     def generate_shader(self, node):
+        
         self.shader_inputs = node.global_inputs
         self.shader_outputs = node.global_outputs
         code = "#version 450\n\n"
@@ -79,6 +81,7 @@ class GLSLCodeGen:
         if isinstance(self.fragment_item, FRAGMENTShaderNode):
             code += "\n// Fragment shader\n\n"
             shader_type = "fragment"
+            
             if self.fragment_item.inputs:
                 for i, (vtype, name) in enumerate(self.fragment_item.inputs):
                     if i == 0:
